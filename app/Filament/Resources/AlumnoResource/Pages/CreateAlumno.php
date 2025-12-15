@@ -6,6 +6,8 @@ use App\Filament\Resources\AlumnoResource;
 use App\Models\Tutor;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
+use Filament\Actions\Action;
+use Filament\Forms\FormValidationException;
 
 class CreateAlumno extends CreateRecord
 {
@@ -24,24 +26,23 @@ class CreateAlumno extends CreateRecord
                 ->body('Debes seleccionar o crear un tutor antes de guardar.')
                 ->send();
 
-            throw new \Filament\Forms\FormValidationException();
+            throw new FormValidationException();
         }
 
-        // 2️⃣ Si el usuario creó un tutor manualmente, lo guardamos primero
-        if (!empty($data['crear_tutor_manual'])) {
+        // 2️⃣ Crear tutor manual solo si no hay tutor seleccionado
+        if (empty($data['tutor_id']) && !empty($data['crear_tutor_manual'])) {
             $nuevoTutor = Tutor::create([
                 'nombre' => $data['tutor_nombre_manual'],
                 'telefono' => $data['tutor_telefono_manual'],
             ]);
 
-            // Asignamos el ID del nuevo tutor al alumno
             $data['tutor_id'] = $nuevoTutor->id;
         }
 
-        // 3️⃣ Llamamos al método padre para crear el alumno
+        // 3️⃣ Llamar al método padre para crear el alumno
         $alumno = parent::handleRecordCreation($data);
 
-        // 4️⃣ Mostrar notificación de éxito
+        // 4️⃣ Notificación de éxito
         Notification::make()
             ->success()
             ->title('¡Éxito!')
@@ -61,9 +62,30 @@ class CreateAlumno extends CreateRecord
             ->title('¡Éxito!')
             ->body('El registro del alumno se ha realizado correctamente.')
             ->icon('heroicon-s-check')
-            ->iconColor('text-green-500')
+            ->iconColor('success')
             ->iconSize('h-6 w-6')
             ->iconPosition('before');
+    }
+
+    /**
+     * Define los botones del formulario
+     */
+    protected function getFormActions(): array
+    {
+        return [
+            // Botón "Guardar"
+            Action::make('create')
+                ->label('Guardar')
+                ->icon('heroicon-o-document-plus') // icono de guardar
+                ->color('success'),
+
+            // Botón "Cancelar"
+            Action::make('cancel')
+                ->label('Cancelar')
+                ->icon('heroicon-o-x-mark') // icono de cancelar
+                ->color('danger')           // rojo
+                ->url($this->getResource()::getUrl('index')),
+        ];
     }
 
     /**

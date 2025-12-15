@@ -201,6 +201,9 @@ class AlumnoResource extends Resource
 
                 Tables\Columns\TextColumn::make('tutor.nombre')
                     ->label('Tutor'),
+
+                Tables\Columns\TextColumn::make('tutor.telefono')
+                ->label('Telefono'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
